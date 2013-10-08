@@ -84,8 +84,9 @@
 #define MOTOR_B_B_PIN		            	38
 #define MOTOR_B_ENABLE_PIN		    		5
 
-#define ENCODER_LEFT_PIN					A2
-#define ENCODER_RIGHT_PIN					A3
+#define ENCODER_POWER_PIN         40
+#define ENCODER_LEFT_PIN					A3
+#define ENCODER_RIGHT_PIN					A2
 
 /*** Define print statements ***/
 #ifdef DEBUG_PRINT_ON

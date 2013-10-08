@@ -5,26 +5,34 @@
  
  #include "config.h"
 
-int ENC_Left;
-int ENC_Right;
+int ENC_LEFT_On;
+int ENC_LEFT_Off;
+int ENC_LEFT_Diff;
 
-int ENC_COUNT_Left = 0;
-int ENC_COUNT_Right = 0;
+int ENC_RIGHT_On;
+int ENC_RIGHT_Off;
+int ENC_RIGHT_Diff;
+
+int ENC_LEFT_Count = 0;
+int ENC_RIGHT_Count = 0;
 
 int ENC_TEMPSTATE_Left = 0;
-int ENC_TEMPSTATE_Right = 0;
-int ENC_STATE_Left = 0;
-int ENC_STATE_Right = 0;
+int ENC_TEMPRIGHT_State = 0;
+int ENC_LEFT_State = 0;
+int ENC_RIGHT_State = 0;
 
 int averageCount = 1;
 
-int mean = 600;
-int STD = 200;
+int mean = 400;
+int STD = 100;
+
+int delayTime = 2;
 
 void setup() {
 	// Set IR pins as outputs
-  pinMode(ENCODER_LEFT_PIN, OUTPUT);
-  pinMode(ENCODER_RIGHT_PIN, OUTPUT);
+  pinMode(ENCODER_POWER_PIN, OUTPUT);
+  //pinMode(ENCODER_LEFT_PIN, OUTPUT);
+  //pinMode(ENCODER_RIGHT_PIN, OUTPUT);
 
   Serial.begin(115200);      // open the serial port at 9600 bps:
 
@@ -33,29 +41,47 @@ void setup() {
 
 void loop() {
 	// Read each sensor in a loop
-  ENC_Left = readSensor(ENCODER_LEFT_PIN, averageCount);
-  ENC_Right = readSensor(ENCODER_RIGHT_PIN, averageCount);
+  digitalWrite(ENCODER_POWER_PIN, HIGH);
+  delay(delayTime);
+  ENC_LEFT_On = readSensor(ENCODER_LEFT_PIN, averageCount);
+  ENC_RIGHT_On= readSensor(ENCODER_RIGHT_PIN, averageCount);
+
+  digitalWrite(ENCODER_POWER_PIN, LOW);
+  delay(delayTime);
+  ENC_LEFT_Off = readSensor(ENCODER_LEFT_PIN, averageCount);
+  ENC_RIGHT_Off= readSensor(ENCODER_RIGHT_PIN, averageCount);
+
+  ENC_LEFT_Diff = ENC_LEFT_On - ENC_LEFT_Off;
+  ENC_RIGHT_Diff = ENC_RIGHT_On - ENC_RIGHT_Off;
   
-  ENC_TEMPSTATE_Left = calcState(ENC_Left, ENC_STATE_Left);
-  ENC_TEMPSTATE_Right = calcState(ENC_Right, ENC_STATE_Right);
+  ENC_TEMPSTATE_Left = calcState(ENC_LEFT_Diff, ENC_LEFT_State);
+  ENC_TEMPRIGHT_State = calcState(ENC_RIGHT_Diff, ENC_RIGHT_State);
   
-  if(ENC_STATE_Left != ENC_TEMPSTATE_Left)
-    ENC_COUNT_Left++;
+  if(ENC_LEFT_State != ENC_TEMPSTATE_Left)
+    ENC_LEFT_Count++;
 
-  if(ENC_STATE_Right != ENC_TEMPSTATE_Right)
-    ENC_COUNT_Right++;
+  if(ENC_RIGHT_State != ENC_TEMPRIGHT_State)
+    ENC_RIGHT_Count++;
 
-  ENC_STATE_Left = ENC_TEMPSTATE_Left;
-  ENC_STATE_Right = ENC_TEMPSTATE_Right;
+  ENC_LEFT_State = ENC_TEMPSTATE_Left;
+  ENC_RIGHT_State = ENC_TEMPRIGHT_State;
 
-  PLOT("ENC_Left", ENC_Left);
-  PLOT("ENC_Right", ENC_Right);
+  PLOT("ENC_LEFT_Off", ENC_LEFT_Off);
+  PLOT("ENC_RIGHT_Off", ENC_RIGHT_Off);
 
-  PLOT("ENC_STATE_Left", ENC_STATE_Left);
-  PLOT("ENC_STATE_Right", ENC_STATE_Right);
+  PLOT("ENC_LEFT_On", ENC_LEFT_On);
+  PLOT("ENC_RIGHT_On", ENC_RIGHT_On);
 
-  PLOT("ENC_COUNT_Left", ENC_COUNT_Left);
-  PLOT("ENC_COUNT_Right", ENC_COUNT_Right);
+  PLOT("ENC_LEFT_Diff", ENC_LEFT_Diff);
+  PLOT("ENC_RIGHT_Diff", ENC_RIGHT_Diff);
+
+  PLOT("ENC_LEFT_State", ENC_LEFT_State);
+  PLOT("ENC_RIGHT_State", ENC_RIGHT_State);
+
+  PLOT("ENC_LEFT_Count", ENC_LEFT_Count);
+  PLOT("ENC_RIGHT_Count", ENC_RIGHT_Count);
+
+  delay(10);
 }
 
 
@@ -76,6 +102,6 @@ int calcState(int curValue, int curState)
   }
   else
   {
-    return curValue < (mean + STD);
+    return curValue > (mean + STD);
   }
 }
