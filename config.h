@@ -76,8 +76,8 @@
 #define MOTOR_L_B_PIN		            	34
 #define MOTOR_L_ENABLE_PIN		    		7
 
-#define MOTOR_R_A_PIN		            	37
-#define MOTOR_R_B_PIN		            	36
+#define MOTOR_R_A_PIN		            	36
+#define MOTOR_R_B_PIN		            	37
 #define MOTOR_R_ENABLE_PIN		    		6
 
 #define MOTOR_B_A_PIN		            	39

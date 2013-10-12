@@ -3,7 +3,9 @@
   Tests the Encoder Sensors & prints the results. Can also run the motors.
  */
  
- #include "config.h"
+  #include "config.h"
+
+  #define MOTORS_ENABLE
 
 int ENC_LEFT_On;
 int ENC_LEFT_Off;
@@ -28,12 +30,39 @@ int STD = 100;
 
 int delayTime = 2;
 
+float scaleFactorInc = 1;
+float scaleFactorDec = 8;
+
+int motorSpeed = 220;
+int ENC_LEFT_Motor_Speed = motorSpeed;
+int ENC_RIGHT_Motor_Speed = motorSpeed;
+
 void setup() {
 	// Set IR pins as outputs
   pinMode(ENCODER_POWER_PIN, OUTPUT);
-  //pinMode(ENCODER_LEFT_PIN, OUTPUT);
-  //pinMode(ENCODER_RIGHT_PIN, OUTPUT);
+  
+  #ifdef MOTORS_ENABLE
+    pinMode(MOTOR_L_A_PIN, OUTPUT);
+    pinMode(MOTOR_L_B_PIN, OUTPUT);  
+    pinMode(MOTOR_L_ENABLE_PIN, OUTPUT);  
 
+    pinMode(MOTOR_R_A_PIN, OUTPUT);
+    pinMode(MOTOR_R_B_PIN, OUTPUT);  
+    pinMode(MOTOR_R_ENABLE_PIN, OUTPUT);  
+
+    pinMode(MOTOR_B_A_PIN, OUTPUT);
+    pinMode(MOTOR_B_B_PIN, OUTPUT);  
+    pinMode(MOTOR_B_ENABLE_PIN, OUTPUT);  
+
+    digitalWrite(MOTOR_L_A_PIN, HIGH);
+    digitalWrite(MOTOR_L_B_PIN, LOW);
+    analogWrite(MOTOR_L_ENABLE_PIN, ENC_LEFT_Motor_Speed);
+
+    digitalWrite(MOTOR_R_A_PIN, HIGH);
+    digitalWrite(MOTOR_R_B_PIN, LOW);
+    analogWrite(MOTOR_R_ENABLE_PIN, ENC_RIGHT_Motor_Speed);
+  #endif
+  
   Serial.begin(115200);      // open the serial port at 9600 bps:
 
   DEBUG_PRINT("Starting...");
@@ -66,11 +95,29 @@ void loop() {
   ENC_LEFT_State = ENC_TEMPSTATE_Left;
   ENC_RIGHT_State = ENC_TEMPRIGHT_State;
 
-  PLOT("ENC_LEFT_Off", ENC_LEFT_Off);
-  PLOT("ENC_RIGHT_Off", ENC_RIGHT_Off);
+  int encDiff = abs(ENC_LEFT_Count - ENC_RIGHT_Count);
+  if(ENC_RIGHT_Count > ENC_LEFT_Count)
+  {
+    ENC_LEFT_Motor_Speed = motorSpeed + (encDiff*scaleFactorInc);
+    ENC_RIGHT_Motor_Speed = motorSpeed - (encDiff*scaleFactorDec);
+  }
+  else
+  {
+    ENC_LEFT_Motor_Speed = motorSpeed - (encDiff*scaleFactorDec);
+    ENC_RIGHT_Motor_Speed = motorSpeed + (encDiff*scaleFactorInc);
+  }
 
-  PLOT("ENC_LEFT_On", ENC_LEFT_On);
-  PLOT("ENC_RIGHT_On", ENC_RIGHT_On);
+  ENC_LEFT_Motor_Speed = limit(ENC_LEFT_Motor_Speed);
+  ENC_RIGHT_Motor_Speed = limit(ENC_RIGHT_Motor_Speed);
+
+  analogWrite(MOTOR_L_ENABLE_PIN, ENC_LEFT_Motor_Speed);
+  analogWrite(MOTOR_R_ENABLE_PIN, ENC_RIGHT_Motor_Speed);
+
+  //PLOT("ENC_LEFT_Off", ENC_LEFT_Off);
+  //PLOT("ENC_RIGHT_Off", ENC_RIGHT_Off);
+
+  //PLOT("ENC_LEFT_On", ENC_LEFT_On);
+  //PLOT("ENC_RIGHT_On", ENC_RIGHT_On);
 
   PLOT("ENC_LEFT_Diff", ENC_LEFT_Diff);
   PLOT("ENC_RIGHT_Diff", ENC_RIGHT_Diff);
@@ -81,7 +128,12 @@ void loop() {
   PLOT("ENC_LEFT_Count", ENC_LEFT_Count);
   PLOT("ENC_RIGHT_Count", ENC_RIGHT_Count);
 
-  delay(10);
+  //PLOT("ENC_LEFT_Motor_Speed", ENC_LEFT_Motor_Speed);
+  //PLOT("ENC_RIGHT_Motor_Speed", ENC_RIGHT_Motor_Speed);
+
+  //PLOT("encDiff", encDiff)
+
+  //delay(1);
 }
 
 
@@ -104,4 +156,14 @@ int calcState(int curValue, int curState)
   {
     return curValue > (mean + STD);
   }
+}
+
+int limit(int value)
+{
+  if(value > 255)
+    return 255;
+  else if(value < 0)
+    return 0;
+  else
+    return value;
 }
